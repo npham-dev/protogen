@@ -1,9 +1,13 @@
-package client;
+package client; // hello world
 syntax = "proto3";
 
+// hello wolrd
 option java_outer_classname = "Ponycopter";
 
-message Chat {
+/**
+ * Wow a multiline comment
+ * or something
+ */ message Chat {
   string id = 1;
   string text = 2;
 }
@@ -17,3 +21,6 @@ message PlayerMove {
   bool angle = 2;
   bool thrust = 3;
 }
+
+/** test multiline */
+/* test multiline */

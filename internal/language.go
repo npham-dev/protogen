@@ -1,11 +1,5 @@
 package internal
 
-import (
-	"errors"
-	"fmt"
-	"strings"
-)
-
 type Metadata struct {
 	packageName string
 	syntax      string
@@ -26,53 +20,55 @@ func Language(content []byte) (Metadata, error) {
 	scanner := newScanner(lexer.analyze())
 	var metadata Metadata
 
-	for scanner.hasNext() {
-		switch {
-		// skip over comments
-		case scanner.match("//"):
-			scanner.skipUntil("\n")
-		case scanner.match("/*"):
-			scanner.skipUntil("*/")
-		// skip over option syntax
-		case scanner.match("option"):
-			scanner.skipUntil(";")
-		case scanner.match("package"):
-			data, err := scanner.extract([]string{"package", "<packageName>", ";"})
-			if err != nil {
-				return metadata, err
-			}
-			metadata.packageName = data["packageName"]
-		case scanner.match("syntax"):
-			data, err := scanner.extract([]string{"syntax", "=", "<syntax>", ";"})
-			if err != nil {
-				return metadata, err
-			}
-			// remove starting and ending quotes
-			metadata.syntax = strings.Trim(data["syntax"], "\"")
-		case scanner.match("message"):
-			message_data, err := scanner.extract([]string{"message", "<message>", "{"})
-			if err != nil {
-				return metadata, err
-			}
+	scanner.hasNext()
 
-			for scanner.curr() != "}" {
-				// reserved syntax - just skip
-				// if scanner.match("reserved") {
-				// }
+	// for scanner.hasNext() {
+	// 	switch {
+	// 	// skip over comments
+	// 	// case scanner.match(Token{purpose: TokenPurposeComment, content: "//"}):
+	// 	// scanner.skipUntil(Token{purpose: TokenPurposeWhitespace, content: "\n"})
+	// 	// case scanner.match(Token{purpose: TokenPurposeComment, content: "/*"}):
+	// 	// scanner.skipUntil("*/")
+	// 	// skip over option syntax
+	// 	case scanner.match(Token{TokenPurposeIdentifier, "option"}):
+	// 		scanner.skipUntil(Token{TokenPurposeSymbol, ";"})
+	// 	case scanner.match(Token{TokenPurposeIdentifier, "package"}):
+	// 		data, err := scanner.extract([]string{"package", "<packageName>", ";"})
+	// 		if err != nil {
+	// 			return metadata, err
+	// 		}
+	// 		metadata.packageName = data["packageName"].content
+	// 	case scanner.match(Token{TokenPurposeIdentifier, "syntax"}):
+	// 		data, err := scanner.extract([]string{"syntax", "=", "<syntax>", ";"})
+	// 		if err != nil {
+	// 			return metadata, err
+	// 		}
+	// 		// remove starting and ending quotes
+	// 		metadata.syntax = strings.Trim(data["syntax"].content, "\"")
+	// 	case scanner.match(Token{TokenPurposeIdentifier, "message"}):
+	// 		message_data, err := scanner.extract([]string{"message", "<message>", "{"})
+	// 		if err != nil {
+	// 			return metadata, err
+	// 		}
 
-				// handle message field/attribute stuff
-				data, err := scanner.extract([]string{"<fieldType>", "<fieldName>", "=", "<fieldId>", ";"})
-				if err != nil {
-					return metadata, err
-				}
+	// 		for scanner.curr() != "}" {
+	// 			// reserved syntax - just skip
+	// 			// if scanner.match("reserved") {
+	// 			// }
 
-				fmt.Println(message_data["message"], data["fieldType"], data["fieldName"], data["fieldId"])
-			}
-			scanner.i++ // skip }
-		default:
-			return metadata, errors.New("unsupported syntax")
-		}
-	}
+	// 			// handle message field/attribute stuff
+	// 			data, err := scanner.extract([]string{"<fieldType>", "<fieldName>", "=", "<fieldId>", ";"})
+	// 			if err != nil {
+	// 				return metadata, err
+	// 			}
+
+	// 			fmt.Println(message_data["message"], data["fieldType"], data["fieldName"], data["fieldId"])
+	// 		}
+	// 		scanner.i++ // skip }
+	// 	default:
+	// 		return metadata, errors.New("unsupported syntax")
+	// 	}
+	// }
 
 	return metadata, nil
 }

@@ -3,6 +3,8 @@ package internal
 import (
 	"fmt"
 	"strings"
+
+	"github.com/samber/lo"
 )
 
 type Scanner struct {
@@ -45,14 +47,14 @@ func (s *Scanner) skipUntil(token Token) {
 	s.next()
 }
 
-func (s *Scanner) extract(pattern []Token) (map[string]string, error) {
-	data := make(map[string]string)
+func (s *Scanner) extract(pattern []Token) (map[string]Token, error) {
+	data := make(map[string]Token)
 	for _, token := range pattern {
-		if strings.HasPrefix(token, "<") && strings.HasSuffix(token, ">") {
-			key := strings.Trim(token, "<>")
+		if strings.HasPrefix(token.content, "<") && strings.HasSuffix(token.content, ">") {
+			key := strings.Trim(token.content, "<>")
 			data[key] = s.curr()
 		} else if s.curr() != token {
-			return data, fmt.Errorf("failed to match pattern: [%s]", strings.Join(pattern, " "))
+			return data, fmt.Errorf("failed to match pattern: [%s]", strings.Join(lo.Map(pattern, func(token Token, _ int) string { return token.content }), " "))
 		}
 		s.next()
 	}
