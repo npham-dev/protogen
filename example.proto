@@ -1,0 +1,17 @@
+package client;
+syntax = "proto3";
+
+message Chat {
+  string id = 1;
+  string text = 2;
+}
+
+message PlayerCreate {
+  string name = 1;
+}
+
+message PlayerMove {
+  string id = 1;
+  bool angle = 2;
+  bool thrust = 3;
+}
