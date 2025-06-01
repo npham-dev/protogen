@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -26,26 +27,40 @@ func Language(content []byte) (Metadata, error) {
 	var metadata Metadata
 
 	for scanner.hasNext() {
-		if scanner.match("package") {
+		switch {
+		// skip over comments
+		case scanner.match("//"):
+			scanner.skipUntil("\n")
+		case scanner.match("/*"):
+			scanner.skipUntil("*/")
+		// skip over option syntax
+		case scanner.match("option"):
+			scanner.skipUntil(";")
+		case scanner.match("package"):
 			data, err := scanner.extract([]string{"package", "<packageName>", ";"})
 			if err != nil {
 				return metadata, err
 			}
 			metadata.packageName = data["packageName"]
-		} else if scanner.match("syntax") {
+		case scanner.match("syntax"):
 			data, err := scanner.extract([]string{"syntax", "=", "<syntax>", ";"})
 			if err != nil {
 				return metadata, err
 			}
 			// remove starting and ending quotes
 			metadata.syntax = strings.Trim(data["syntax"], "\"")
-		} else if scanner.match("message") {
+		case scanner.match("message"):
 			message_data, err := scanner.extract([]string{"message", "<message>", "{"})
 			if err != nil {
 				return metadata, err
 			}
 
 			for scanner.curr() != "}" {
+				// reserved syntax - just skip
+				// if scanner.match("reserved") {
+				// }
+
+				// handle message field/attribute stuff
 				data, err := scanner.extract([]string{"<fieldType>", "<fieldName>", "=", "<fieldId>", ";"})
 				if err != nil {
 					return metadata, err
@@ -53,7 +68,9 @@ func Language(content []byte) (Metadata, error) {
 
 				fmt.Println(message_data["message"], data["fieldType"], data["fieldName"], data["fieldId"])
 			}
-			scanner.next() // skip }
+			scanner.i++ // skip }
+		default:
+			return metadata, errors.New("unsupported syntax")
 		}
 	}
 

@@ -38,6 +38,13 @@ func (s *Scanner) match(token Token) bool {
 	return s.curr() == token
 }
 
+func (s *Scanner) skipUntil(token Token) {
+	for s.hasNext() && s.curr() != token {
+		s.next()
+	}
+	s.next()
+}
+
 func (s *Scanner) extract(pattern []Token) (map[string]string, error) {
 	data := make(map[string]string)
 	for _, token := range pattern {
@@ -47,7 +54,6 @@ func (s *Scanner) extract(pattern []Token) (map[string]string, error) {
 		} else if s.curr() != token {
 			return data, fmt.Errorf("failed to match pattern: [%s]", strings.Join(pattern, " "))
 		}
-
 		s.next()
 	}
 
