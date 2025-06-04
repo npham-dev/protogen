@@ -68,7 +68,8 @@ func analyze(content []byte) []Token {
 			if peekChar() == '/' {
 				addExistingWord()
 				// handle slash comments
-				i += 2 // skip over //
+				// skip double slash
+				i += 2
 				for hasNext() && currChar() != '\n' {
 					word += string(currChar())
 					i++
@@ -77,19 +78,23 @@ func analyze(content []byte) []Token {
 				word = ""
 				lineNumber++
 			} else if peekChar() == '*' {
-				addExistingWord()
 				// handle multiline comments
-				i += 2 // skip over /*
+				addExistingWord()
+				// skip over comment starter
+				i += 2
+				internalLineNumber := 0
 				for hasNext() && !(currChar() == '*' && peekChar() == '/') {
 					if currChar() == '\n' {
-						lineNumber++
+						// line number should reflect start of comment
+						internalLineNumber++
 					}
 					word += string(currChar())
 					i++
 				}
-				i++ // skip over */
+				i++
 				tokens = append(tokens, Token{TokenPurposeComment, formatMultilineComment(word), lineNumber})
 				word = ""
+				lineNumber += internalLineNumber
 			} else {
 				word += string(currChar())
 			}
