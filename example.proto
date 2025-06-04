@@ -1,5 +1,5 @@
-package client; // hello world
-syntax = "proto3";
+package client/*test*/;
+syntax = "proto3"; // hello world
 
 // hello wolrd
 option java_outer_classname = "Ponycopter";

@@ -9,17 +9,17 @@ import (
 
 type Lexer struct {
 	content []byte
-	i       int
 }
 
 func newLexer(content []byte) Lexer {
-	return Lexer{content: content, i: 0}
+	return Lexer{content}
 }
 
 // @todo store line number in struct for better error messages?
 type Token struct {
-	purpose TokenPurpose
-	content string
+	purpose    TokenPurpose
+	content    string
+	lineNumber int
 }
 
 type TokenPurpose = string
@@ -38,72 +38,72 @@ func (l *Lexer) analyze() []Token {
 	var tokens []Token
 	var word string
 	i := 0
+	lineNumber := 1
 
 	// utility methods for common checks
-	hasNext := func() bool {
-		return i < len(l.content)
-	}
-
-	currChar := func() byte {
-		return l.content[i]
-	}
-
-	nextChar := func() byte {
-		return l.content[i+1]
+	hasNext := func() bool { return i < len(l.content) }
+	currChar := func() byte { return l.content[i] }
+	peekChar := func() byte { return l.content[i+1] }
+	addExistingWord := func() {
+		if len(word) > 0 {
+			tokens = append(tokens, Token{determineTokenPurpose(word), word, lineNumber})
+		}
+		word = ""
 	}
 
 	for hasNext() {
 		switch currChar() {
-		case '<':
-		case '>':
-		case ';':
-		case '}':
-		case '{':
-		case '=':
-			tokens = append(tokens, Token{TokenPurposeIdentifier, word})
-			tokens = append(tokens, Token{TokenPurposeSymbol, string(currChar())})
+		case '<', '>', ';', '}', '{', '=':
+			addExistingWord()
+			tokens = append(tokens, Token{TokenPurposeSymbol, string(currChar()), lineNumber})
 			word = ""
 		case ' ', '\n':
-			tokens = append(tokens, Token{TokenPurposeIdentifier, word})
-			tokens = append(tokens, Token{TokenPurposeWhitespace, string(currChar())})
+			addExistingWord()
+			tokens = append(tokens, Token{TokenPurposeWhitespace, string(currChar()), lineNumber})
 			word = ""
-		default:
-			if currChar() == '"' {
-				// handle strings
-				// skip over current quote
+			if currChar() == '\n' {
+				lineNumber += 1
+			}
+		case '"':
+			// @todo escaping comments/quotes?
+			i++
+			for hasNext() && currChar() != '"' {
+				word += string(currChar())
 				i++
-				for hasNext() && currChar() != '"' {
-					word += string(currChar())
-					i++
-				}
-				tokens = append(tokens, Token{TokenPurposeString, word})
-				word = ""
-			} else if currChar() == '/' && nextChar() == '/' {
+			}
+			tokens = append(tokens, Token{TokenPurposeString, word, lineNumber})
+			word = ""
+		case '/':
+			if peekChar() == '/' {
+				addExistingWord()
 				// handle slash comments
 				i += 2 // skip over //
 				for hasNext() && currChar() != '\n' {
 					word += string(currChar())
 					i++
 				}
-				tokens = append(tokens, Token{TokenPurposeComment, word})
+				tokens = append(tokens, Token{TokenPurposeComment, word, lineNumber})
 				word = ""
-			} else if currChar() == '/' && nextChar() == '*' {
+			} else if peekChar() == '*' {
+				addExistingWord()
 				// handle multiline comments
 				i += 2 // skip over /*
-				for hasNext() && !(currChar() == '*' && nextChar() == '/') {
+				for hasNext() && !(currChar() == '*' && peekChar() == '/') {
 					word += string(currChar())
 					i++
 				}
-				i += 2 // skip over */
-				tokens = append(tokens, Token{TokenPurposeComment, formatMultilineComment(word)})
+				i++ // skip over */
+				tokens = append(tokens, Token{TokenPurposeComment, formatMultilineComment(word), lineNumber})
 				word = ""
 			} else {
 				word += string(currChar())
 			}
+		default:
+			word += string(currChar())
 		}
 		i++
 	}
-	tokens = append(tokens, Token{TokenPurposeIdentifier, word})
+	addExistingWord()
 
 	fmt.Println(tokens)
 
@@ -111,7 +111,7 @@ func (l *Lexer) analyze() []Token {
 	// skip whitespace
 	tokens = lo.Filter(
 		lo.Map(tokens, func(token Token, _ int) Token {
-			return Token{token.purpose, strings.TrimSpace(token.content)}
+			return Token{token.purpose, strings.TrimSpace(token.content), token.lineNumber}
 		}),
 		func(token Token, _ int) bool {
 			return !(len(token.content) == 0 || token.purpose == TokenPurposeWhitespace)
@@ -135,5 +135,13 @@ func formatMultilineComment(comment string) string {
 
 // give a word, determine if it should be an identifier or reserved word
 func determineTokenPurpose(word string) TokenPurpose {
+	if len(word) > 0 {
+		switch word[0] {
+		case '<', '>', ';', '}', '{', '=':
+			return TokenPurposeSymbol
+		case ' ', '\n':
+			return TokenPurposeWhitespace
+		}
+	}
 	return TokenPurposeIdentifier
 }
