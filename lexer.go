@@ -1,19 +1,10 @@
-package internal
+package main
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/samber/lo"
 )
-
-type Lexer struct {
-	content []byte
-}
-
-func newLexer(content []byte) Lexer {
-	return Lexer{content}
-}
 
 // @todo store line number in struct for better error messages?
 type Token struct {
@@ -33,7 +24,7 @@ const (
 	TokenPurposeUnknown    TokenPurpose = "unknown"
 )
 
-func (l *Lexer) analyze() []Token {
+func analyze(content []byte) []Token {
 	// split content into tokens
 	var tokens []Token
 	var word string
@@ -41,9 +32,9 @@ func (l *Lexer) analyze() []Token {
 	lineNumber := 1
 
 	// utility methods for common checks
-	hasNext := func() bool { return i < len(l.content) }
-	currChar := func() byte { return l.content[i] }
-	peekChar := func() byte { return l.content[i+1] }
+	hasNext := func() bool { return i < len(content) }
+	currChar := func() byte { return content[i] }
+	peekChar := func() byte { return content[i+1] }
 	addExistingWord := func() {
 		if len(word) > 0 {
 			tokens = append(tokens, Token{determineTokenPurpose(word), word, lineNumber})
@@ -62,7 +53,7 @@ func (l *Lexer) analyze() []Token {
 			tokens = append(tokens, Token{TokenPurposeWhitespace, string(currChar()), lineNumber})
 			word = ""
 			if currChar() == '\n' {
-				lineNumber += 1
+				lineNumber++
 			}
 		case '"':
 			// @todo escaping comments/quotes?
@@ -84,11 +75,15 @@ func (l *Lexer) analyze() []Token {
 				}
 				tokens = append(tokens, Token{TokenPurposeComment, word, lineNumber})
 				word = ""
+				lineNumber++
 			} else if peekChar() == '*' {
 				addExistingWord()
 				// handle multiline comments
 				i += 2 // skip over /*
 				for hasNext() && !(currChar() == '*' && peekChar() == '/') {
+					if currChar() == '\n' {
+						lineNumber++
+					}
 					word += string(currChar())
 					i++
 				}
@@ -105,8 +100,6 @@ func (l *Lexer) analyze() []Token {
 	}
 	addExistingWord()
 
-	fmt.Println(tokens)
-
 	// we don't skip comments here b/c we want them to appear in the generated stuff
 	// skip whitespace
 	tokens = lo.Filter(
@@ -114,11 +107,8 @@ func (l *Lexer) analyze() []Token {
 			return Token{token.purpose, strings.TrimSpace(token.content), token.lineNumber}
 		}),
 		func(token Token, _ int) bool {
-			return !(len(token.content) == 0 || token.purpose == TokenPurposeWhitespace)
+			return !(token.purpose == TokenPurposeWhitespace)
 		})
-
-	fmt.Println("\n", tokens)
-
 	return tokens
 }
 
@@ -142,6 +132,9 @@ func determineTokenPurpose(word string) TokenPurpose {
 		case ' ', '\n':
 			return TokenPurposeWhitespace
 		}
+	}
+	if len(strings.TrimSpace(word)) == 0 {
+		return TokenPurposeWhitespace
 	}
 	return TokenPurposeIdentifier
 }

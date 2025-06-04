@@ -1,4 +1,4 @@
-package internal
+package main
 
 import (
 	"fmt"
@@ -31,7 +31,7 @@ func (s *Scanner) hasNext() bool {
 
 func (s *Scanner) expect(token Token) error {
 	if s.curr() != token {
-		return fmt.Errorf("expected %s but got %s", token, s.curr())
+		return fmt.Errorf("expected %s but got %s", token.content, s.curr().content)
 	}
 	return nil
 }

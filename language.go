@@ -1,4 +1,4 @@
-package internal
+package main
 
 type Metadata struct {
 	packageName string
@@ -16,8 +16,7 @@ scanner.extract(["message", "<Message>", "{"])
 */
 
 func Language(content []byte) (Metadata, error) {
-	lexer := newLexer(content)
-	scanner := newScanner(lexer.analyze())
+	scanner := newScanner(analyze(content))
 	var metadata Metadata
 
 	scanner.hasNext()

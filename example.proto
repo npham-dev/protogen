@@ -1,7 +1,7 @@
 package client/*test*/;
 syntax = "proto3"; // hello world
 
-// hello wolrd
+// hello world
 option java_outer_classname = "Ponycopter";
 
 /**
