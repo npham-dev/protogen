@@ -22,7 +22,19 @@ const (
 	TokenPurposeString     TokenPurpose = "string"
 	TokenPurposeComment    TokenPurpose = "comment"
 	TokenPurposeUnknown    TokenPurpose = "unknown"
+	// @todo number, reserved word (like "package")
 )
+
+// does this token match another token?
+// we don't use equals here b/c line numbers can differ
+func (t Token) matches(token Token) bool {
+	// comments just need to match types, they shouldn't impact anything
+	// I don't think protobuf has comment directives
+	if t.purpose == TokenPurposeComment && token.purpose == TokenPurposeComment {
+		return true
+	}
+	return t.purpose == token.purpose && t.content == token.content
+}
 
 func analyze(content []byte) []Token {
 	// split content into tokens

@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"strings"
-
-	"github.com/samber/lo"
 )
 
 type Scanner struct {
@@ -22,7 +20,11 @@ func (s *Scanner) curr() Token {
 
 func (s *Scanner) next() Token {
 	s.i += 1
-	return s.tokens[s.i]
+	if s.i < len(s.tokens) {
+		return s.tokens[s.i]
+	}
+	return Token{}
+	// @todo maybe don't return zero value? probably should let user know or what
 }
 
 func (s *Scanner) hasNext() bool {
@@ -36,12 +38,12 @@ func (s *Scanner) expect(token Token) error {
 	return nil
 }
 
-func (s *Scanner) match(token Token) bool {
-	return s.curr() == token
+func (s *Scanner) matches(token Token) bool {
+	return s.curr().matches(token)
 }
 
 func (s *Scanner) skipUntil(token Token) {
-	for s.hasNext() && s.curr() != token {
+	for s.hasNext() && s.curr().matches(token) {
 		s.next()
 	}
 	s.next()
@@ -50,11 +52,30 @@ func (s *Scanner) skipUntil(token Token) {
 func (s *Scanner) extract(pattern []Token) (map[string]Token, error) {
 	data := make(map[string]Token)
 	for _, token := range pattern {
-		if strings.HasPrefix(token.content, "<") && strings.HasSuffix(token.content, ">") {
-			key := strings.Trim(token.content, "<>")
-			data[key] = s.curr()
-		} else if s.curr() != token {
-			return data, fmt.Errorf("failed to match pattern: [%s]", strings.Join(lo.Map(pattern, func(token Token, _ int) string { return token.content }), " "))
+		// get current token (skip over comments)
+		for s.hasNext() && s.curr().purpose == TokenPurposeComment {
+			s.next()
+		}
+		curr := s.curr()
+
+		if strings.HasPrefix(token.content, "{{") && strings.HasSuffix(token.content, "}}") {
+			if curr.purpose != token.purpose {
+				return data, fmt.Errorf(
+					"error at line %d:\nexpected '%s' but found '%s'",
+					curr.lineNumber,
+					token.content,
+					curr.content,
+				)
+			}
+			key := strings.Trim(token.content, "{}")
+			data[key] = curr
+		} else if !curr.matches(token) {
+			return data, fmt.Errorf(
+				"error at line %d:\nexpected '%s' but found '%s'",
+				curr.lineNumber,
+				token.content,
+				curr.content,
+			)
 		}
 		s.next()
 	}

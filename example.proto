@@ -2,7 +2,6 @@ package client/*test*/;
 syntax = "proto3"; // hello world
 
 // hello world
-option java_outer_classname = "Ponycopter";
 
 /**
  * Wow a multiline comment

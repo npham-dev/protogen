@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 )
@@ -12,5 +13,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	analyze(content)
+	fmt.Println(analyze(content))
+	fmt.Println(Language(content))
 }
