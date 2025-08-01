@@ -24,6 +24,7 @@ const (
 	TokenPurposeString     TokenPurpose = "string"
 	TokenPurposeInteger    TokenPurpose = "integer"
 	TokenPurposeComment    TokenPurpose = "comment"
+	TokenPurposeReserved   TokenPurpose = "reserved"
 	TokenPurposeUnknown    TokenPurpose = "unknown"
 )
 
@@ -159,10 +160,12 @@ func determineTokenPurpose(word string) TokenPurpose {
 		}
 	}
 
-	// matches a known type
+	// matches a reserved word
 	switch fmtWord {
 	case "double", "float", "int32", "int64", "uint32", "uint64", "sint32", "sint64", "fixed32", "fixed64", "sfixed32", "sfixed64", "bool", "string", "bytes":
 		return TokenPurposeType
+	case "enum", "option", "package", "syntax", "message":
+		return TokenPurposeReserved
 	}
 
 	// is it an integer

@@ -13,7 +13,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(analyze(content))
-	fmt.Println()
-	fmt.Println(language(content))
+	tokens := analyze(content)
+	fmt.Println(parse(tokens))
 }

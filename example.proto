@@ -1,7 +1,17 @@
 package client/*test*/;
-syntax = "proto3"; // hello world
+syntax = "proto3"; // this generator is for proto3 files, not proto2
 
-// hello world
+// example enum taken from the documentation
+enum Corpus {
+  CORPUS_UNSPECIFIED = 0;
+  CORPUS_UNIVERSAL = 1;
+  CORPUS_WEB = 2;
+  CORPUS_IMAGES = 3;
+  CORPUS_LOCAL = 4;
+  CORPUS_NEWS = 5;
+  CORPUS_PRODUCTS = 6;
+  CORPUS_VIDEO = 7;
+}
 
 /**
  * Wow a multiline comment
