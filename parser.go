@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+// I feel like this isn't really an ast? the structure is pretty flat
+// idk but I'm prefixing all outputs with "Syntax" like "Syntax Tree"
 type SyntaxDocument struct {
 	packageName string
 	syntax      string
@@ -22,9 +24,6 @@ type SyntaxEnumField struct {
 	name  string
 	value string
 }
-
-// I feel like this isn't really an ast? the structure is pretty flat
-// idk but I'm prefixing all outputs with "Syntax" like "Syntax Tree"
 type SyntaxMessage struct {
 	name     string
 	fields   []SyntaxMessageField
@@ -161,7 +160,7 @@ func parse(tokens []Token) (SyntaxDocument, error) {
 
 				fmt.Println("\t", data["fieldType"], data["fieldName"], data["fieldId"])
 			}
-			scanner.i++ // skip }
+			scanner.next()// skip }
 		default:
 			curr := scanner.curr()
 			return document, fmt.Errorf("unsupported syntax at line %d:\n%s", curr.lineNumber, curr.content)

@@ -6,28 +6,29 @@
 
 ## Why?
 
-Why build (yet) another type generator when more mature options like [ts-proto](https://github.com/stephenh/ts-proto) exist? 
+Why build (yet) another type generator when more mature options like [ts-proto](https://github.com/stephenh/ts-proto) exist?
 
-Honestly, I wanted to learn Go and a CLI tool seems like a great starter project. 
+I wanted to learn Go and a CLI seems like a great starter project. Also I'm obsessed with [generators](https://github.com/natmfat/shitgen).
 
-The other primary motivator was to build a typed communication system for shypz.io, a multiplayer space game I've been working on. Given that multiplayer games involve a significant amount of messages between the server and client (to receive player inputs and broadcast physics updates, for example), it was clear to me that I needed a compressed structure to minimize the size of data transfers. My first thought was to use typed arrays. However, developing a protocol that was fast, efficient, and general enough to work with many different data types increasingly felt impractical. Even encoding/decoding seemingly basic primitives like variable length strings didn't feel right (or fast), and my solution involved a lot of code duplication across the server and client to properly receive and send events. Ultimately, I decided to use `protobuf` and make some kind of type generator. I'm not totally certain if this is even the right tool for the job, but I know JSON certainly isn't. 
+In terms of a real-world use case, I needed a typed communication system for a multiplayer space game I've been working on. Multiplayer games involve a lot of communication between the server and client (for player inputs and broadcasting physics updates, for example). From the start it was clear that I needed a compressed structure. Typed arrays were okay, but weren't general enough to work with many data types - encoding and decoding seemingly basic primitives (like variable length strings) involved a lot of code duplication and felt wrong.
 
-Thus, `protogen` was born out of an excuse to learn a new programming langauge and leverage `protobuf` in a TypeScript environment. 
+Ultimately, I decided to use `protobuf` and build some kind of type generator. I'm not totally certain if this is even the right tool for the job, but I know raw JSON certainly isn't.
 
 ## Supported Syntax
 
-|Syntax|Implemented|
-|-------|-----------|
-|Message|✅|
-|Reserved|✅|
-|Comments|❌|
-|Enums|❌|
-|Import|❌|
-|`repeated`|❌|
-|`optional`|❌|
-|Nested messages|❌|
-|`google.protobuf.Any`|❌|
-|`oneof`|❌|
-|Maps|❌|
-|`option`|❌|
-|`extend`|❌|
+`protogen` only supports a subset of the [proto3 language](https://protobuf.dev/programming-guides/proto3/). I've covered the basics, but anything more complicated should use mature and battle tested library instead.
+
+| Syntax                | Implemented |
+| --------------------- | ----------- |
+| Message               | ⚠️ (wip)    |
+| Reserved              | ✅          |
+| Comments              | ✅          |
+| Enums                 | ✅          |
+| Import                | ❌          |
+| Maps                  | ❌          |
+| `repeated`            | ❌          |
+| `optional`            | ❌          |
+| `google.protobuf.Any` | ❌          |
+| `oneof`               | ❌          |
+| `option`              | ❌          |
+| `extend`              | ❌          |
