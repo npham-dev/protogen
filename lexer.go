@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/samber/lo"
@@ -17,12 +18,13 @@ type TokenPurpose = string
 
 const (
 	TokenPurposeIdentifier TokenPurpose = "identifier"
+	TokenPurposeType       TokenPurpose = "type"
 	TokenPurposeSymbol     TokenPurpose = "symbol"
 	TokenPurposeWhitespace TokenPurpose = "whitespace"
 	TokenPurposeString     TokenPurpose = "string"
+	TokenPurposeInteger    TokenPurpose = "integer"
 	TokenPurposeComment    TokenPurpose = "comment"
 	TokenPurposeUnknown    TokenPurpose = "unknown"
-	// @todo number, reserved word (like "package")
 )
 
 // does this token match another token?
@@ -140,18 +142,34 @@ func formatMultilineComment(comment string) string {
 	}), "\n")
 }
 
-// give a word, determine if it should be an identifier or reserved word
+// give a word, determine if it should be an identifier, number, type, or reserved word
 func determineTokenPurpose(word string) TokenPurpose {
+	// trimmed word is blank
+	// means it's whitespace
+	fmtWord := strings.TrimSpace(word)
+	if len(fmtWord) == 0 {
+		return TokenPurposeWhitespace
+	}
+
+	// is it a special char
 	if len(word) > 0 {
 		switch word[0] {
 		case '<', '>', ';', '}', '{', '=':
 			return TokenPurposeSymbol
-		case ' ', '\n':
-			return TokenPurposeWhitespace
 		}
 	}
-	if len(strings.TrimSpace(word)) == 0 {
-		return TokenPurposeWhitespace
+
+	// matches a known type
+	switch fmtWord {
+	case "double", "float", "int32", "int64", "uint32", "uint64", "sint32", "sint64", "fixed32", "fixed64", "sfixed32", "sfixed64", "bool", "string", "bytes":
+		return TokenPurposeType
 	}
+
+	// is it an integer
+	_, err := strconv.Atoi(fmtWord)
+	if err == nil {
+		return TokenPurposeInteger
+	}
+
 	return TokenPurposeIdentifier
 }

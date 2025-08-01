@@ -16,6 +16,9 @@ message PlayerCreate {
 }
 
 message PlayerMove {
+  reserved "foo", "bar";
+  reserved 2, 15, 9 to 11;
+
   string id = 1;
   bool angle = 2;
   bool thrust = 3;

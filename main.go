@@ -14,5 +14,6 @@ func main() {
 	}
 
 	fmt.Println(analyze(content))
-	fmt.Println(Language(content))
+	fmt.Println()
+	fmt.Println(language(content))
 }

@@ -22,7 +22,7 @@ func t(purpose TokenPurpose, content string) Token {
 	}
 }
 
-func Language(content []byte) (Metadata, error) {
+func language(content []byte) (Metadata, error) {
 	scanner := newScanner(analyze(content))
 	var metadata Metadata
 
@@ -35,6 +35,7 @@ func Language(content []byte) (Metadata, error) {
 			scanner.next()
 
 		// skip over option syntax
+		// https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/descriptor.proto
 		case scanner.matches(t(TokenPurposeIdentifier, "option")):
 			scanner.skipUntil(t(TokenPurposeSymbol, ";"))
 
@@ -73,17 +74,18 @@ func Language(content []byte) (Metadata, error) {
 				return metadata, err
 			}
 
-			for !scanner.curr().matches(t(TokenPurposeSymbol, "}")) && scanner.hasNext() {
+			for !scanner.matches(t(TokenPurposeSymbol, "}")) && scanner.hasNext() {
 				// reserved syntax - just skip until ;
-				// if scanner.match("reserved") {
-				// }
+				if scanner.matches(t(TokenPurposeIdentifier, "reserved")) {
+					scanner.skipUntil(t(TokenPurposeSymbol, ";"))
+				}
 
 				// handle message field/attribute stuff
 				data, err := scanner.extract([]Token{
-					t(TokenPurposeIdentifier, "{{fieldType}}"),
+					t(TokenPurposeType, "{{fieldType}}"),
 					t(TokenPurposeIdentifier, "{{fieldName}}"),
 					t(TokenPurposeSymbol, "="),
-					t(TokenPurposeIdentifier, "{{fieldId}}"), // @todo numbers in lexer
+					t(TokenPurposeInteger, "{{fieldId}}"),
 					t(TokenPurposeSymbol, ";"),
 				})
 				if err != nil {
@@ -100,4 +102,12 @@ func Language(content []byte) (Metadata, error) {
 	}
 
 	return metadata, nil
+}
+
+func parseMessage() {
+
+}
+
+func parseMessageLine() {
+	
 }

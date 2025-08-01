@@ -43,7 +43,7 @@ func (s *Scanner) matches(token Token) bool {
 }
 
 func (s *Scanner) skipUntil(token Token) {
-	for s.hasNext() && s.curr().matches(token) {
+	for s.hasNext() && !s.curr().matches(token) {
 		s.next()
 	}
 	s.next()
