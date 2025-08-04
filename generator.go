@@ -88,11 +88,6 @@ func kindToZod(kind string, message *SyntaxMessage, messagePath *[]string) strin
 		return "z.number()"
 	}
 
-	return resolveIdentifier(kind, message, messagePath)
-}
-
-func resolveIdentifier(identifier string, message *SyntaxMessage, messagePath *[]string) string {
-
 	// @audit we should probably verify types against the document & throw an error otherwise
 	// case 1: check that external type exists
 	// case 2: check that internal type exists (we only check first part to verify scope & assume the rest is in there)
@@ -108,7 +103,7 @@ func resolveIdentifier(identifier string, message *SyntaxMessage, messagePath *[
 		so if we're given "Inner" and a message of "Message", we should resolve to Message__Inner
 		if we're given "Outer" and a message of "Message", we just resolve to Outer and assume it exists outside
 	*/
-	output := strings.Split(identifier, ".")
+	output := strings.Split(kind, ".")
 	for _, childMessage := range message.messages {
 		if childMessage.name == output[0] {
 			output = append(*messagePath, output...)
