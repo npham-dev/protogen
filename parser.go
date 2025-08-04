@@ -72,7 +72,7 @@ func parse(tokens []Token) (SyntaxDocument, error) {
 
 		// skip over import syntax
 		// @todo import public syntax?
-		// @todo translate imports into typescript types 
+		// @todo translate imports into typescript types
 		// ex) import "google/protobuf/any.proto";
 		case scanner.matches(t(TokenPurposeReserved, "import")):
 			data, err := scanner.extract([]Token{

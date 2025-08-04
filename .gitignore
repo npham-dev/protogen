@@ -1,4 +1,9 @@
 .DS_Store
+
+# testing typescript exports
 example.ts
+types.ts
 
 node_modules
+
+protogen

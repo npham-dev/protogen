@@ -87,7 +87,7 @@ func kindToZod(kind string, message *SyntaxMessage, messagePath *[]string) strin
 		// since most scalar types are numbers we use this as a default
 		return "z.number()"
 	}
-	
+
 	// @todo actually read imports
 	// this is a pretty shit mechanism but oh well
 	if kind == "google.protobuf.Any" {

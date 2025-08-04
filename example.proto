@@ -60,6 +60,7 @@ message SearchResponse {
 }
 
 /** 
+roughly expected output
 export const Test__Result = z.object()
 export const Test = z.object({})
 
