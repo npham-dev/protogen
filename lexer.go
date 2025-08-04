@@ -18,6 +18,7 @@ type TokenPurpose = string
 
 const (
 	TokenPurposeIdentifier TokenPurpose = "identifier"
+	// scalar type, https://protobuf.dev/programming-guides/proto3/#scalar
 	TokenPurposeType       TokenPurpose = "type"
 	TokenPurposeSymbol     TokenPurpose = "symbol"
 	TokenPurposeWhitespace TokenPurpose = "whitespace"
@@ -26,6 +27,7 @@ const (
 	TokenPurposeComment    TokenPurpose = "comment"
 	TokenPurposeReserved   TokenPurpose = "reserved"
 	TokenPurposeUnknown    TokenPurpose = "unknown"
+	TokenPurposeAny        TokenPurpose = "any"
 )
 
 // does this token match another token?
@@ -59,7 +61,7 @@ func analyze(content []byte) []Token {
 
 	for hasNext() {
 		switch currChar() {
-		case '<', '>', ';', '}', '{', '=':
+		case '<', '>', ';', '}', '{', '=', '[', ']', ',':
 			addExistingWord()
 			tokens = append(tokens, Token{TokenPurposeSymbol, string(currChar()), lineNumber})
 			word = ""
@@ -155,16 +157,16 @@ func determineTokenPurpose(word string) TokenPurpose {
 	// is it a special char
 	if len(word) > 0 {
 		switch word[0] {
-		case '<', '>', ';', '}', '{', '=':
+		case '<', '>', ';', '}', '{', '=', '[', ']', ',':
 			return TokenPurposeSymbol
 		}
 	}
 
 	// matches a reserved word
 	switch fmtWord {
-	case "double", "float", "int32", "int64", "uint32", "uint64", "sint32", "sint64", "fixed32", "fixed64", "sfixed32", "sfixed64", "bool", "string", "bytes":
+	case "map", "double", "float", "int32", "int64", "uint32", "uint64", "sint32", "sint64", "fixed32", "fixed64", "sfixed32", "sfixed64", "bool", "string", "bytes":
 		return TokenPurposeType
-	case "enum", "option", "package", "syntax", "message", "repeated":
+	case "enum", "option", "optional", "package", "syntax", "message", "repeated":
 		return TokenPurposeReserved
 	}
 

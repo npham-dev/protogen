@@ -31,15 +31,24 @@ func (s *Scanner) hasNext() bool {
 	return s.i < len(s.tokens)
 }
 
-func (s *Scanner) expect(token Token) error {
-	if s.curr() != token {
-		return fmt.Errorf("expected %s but got %s", token.content, s.curr().content)
-	}
-	return nil
-}
+// func (s *Scanner) expect(token Token) error {
+// 	if s.curr() != token {
+// 		return fmt.Errorf("expected %s but got %s", token.content, s.curr().content)
+// 	}
+// 	return nil
+// }
 
 func (s *Scanner) matches(token Token) bool {
 	return s.curr().matches(token)
+}
+
+func (s *Scanner) matchesPurpose(purposes []TokenPurpose) bool {
+	for _, purpose := range purposes {
+		if purpose == s.curr().purpose {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Scanner) skipUntil(token Token) {
@@ -59,23 +68,23 @@ func (s *Scanner) extract(pattern []Token) (map[string]Token, error) {
 		curr := s.curr()
 
 		if strings.HasPrefix(token.content, "{{") && strings.HasSuffix(token.content, "}}") {
-			if curr.purpose != token.purpose {
-				return data, fmt.Errorf(
-					"error at line %d:\nexpected '%s' but found '%s'",
+			if curr.purpose == token.purpose || token.purpose == TokenPurposeAny {
+				key := strings.Trim(token.content, "{}")
+				data[key] = curr
+			} else {
+				return data, syntaxError(
 					curr.lineNumber,
-					token.content,
-					curr.content,
-				)
+					fmt.Sprintf(
+						"expected '%s' but found '%s'",
+						token.content,
+						curr.content))
 			}
-			key := strings.Trim(token.content, "{}")
-			data[key] = curr
 		} else if !curr.matches(token) {
-			return data, fmt.Errorf(
-				"error at line %d:\nexpected '%s' but found '%s'",
+			return data, syntaxError(
 				curr.lineNumber,
-				token.content,
-				curr.content,
-			)
+				fmt.Sprintf("expected '%s' but found '%s'", token.content,
+					curr.content,
+				))
 		}
 		s.next()
 	}
@@ -84,4 +93,12 @@ func (s *Scanner) extract(pattern []Token) (map[string]Token, error) {
 	// ex) scanner.extract([]string{"pattern", ";"})
 	//     the current token is NOT ";", it's whatever comes after it in the content
 	return data, nil
+}
+
+func syntaxError(lineNumber int, message string) error {
+	return fmt.Errorf(
+		"[protogen] error at line %d:\n%s",
+		lineNumber,
+		message,
+	)
 }

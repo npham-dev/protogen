@@ -8,7 +8,6 @@ import (
 	"github.com/kr/pretty"
 )
 
-
 func main() {
 	filePath := "./example.proto"
 	content, err := os.ReadFile(filePath)

@@ -32,6 +32,7 @@ message PlayerMove {
   string id = 1;
   bool angle = 2;
   bool thrust = 3;
+  map<string, PlayerCreate> projects = 4;
 }
 
 /** test multiline */

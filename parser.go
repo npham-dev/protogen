@@ -21,8 +21,8 @@ type SyntaxEnum struct {
 }
 
 type SyntaxEnumField struct {
-	name  string
-	value string
+	name string
+	id   string
 }
 
 type SyntaxMessage struct {
@@ -32,9 +32,16 @@ type SyntaxMessage struct {
 }
 
 type SyntaxMessageField struct {
-	name      string
-	value     string
-	fieldType string
+	name string
+	id   string
+	kind string
+
+	repeated bool
+	optional bool
+
+	// optional values for maps
+	mapKey   *string
+	mapValue *string
 }
 
 func t(purpose TokenPurpose, content string) Token {
@@ -105,13 +112,17 @@ func parse(tokens []Token) (SyntaxDocument, error) {
 			syntaxEnum := SyntaxEnum{name: enumData["name"].content}
 
 			// @todo "Enum Value Aliases"
+			// ex) option allow_alias = true;
+			//   	 EAA_STARTED = 1;
+			//		 EAA_RUNNING = 1;
+
 			// parse enum body
 			for !scanner.matches(t(TokenPurposeSymbol, "}")) && scanner.hasNext() {
 				// handle message field/attribute stuff
 				data, err := scanner.extract([]Token{
-					t(TokenPurposeIdentifier, "{{fieldName}}"),
+					t(TokenPurposeIdentifier, "{{name}}"),
 					t(TokenPurposeSymbol, "="),
-					t(TokenPurposeInteger, "{{fieldValue}}"),
+					t(TokenPurposeInteger, "{{id}}"),
 					t(TokenPurposeSymbol, ";"),
 				})
 				if err != nil {
@@ -119,8 +130,8 @@ func parse(tokens []Token) (SyntaxDocument, error) {
 				}
 
 				syntaxEnum.fields = append(syntaxEnum.fields, SyntaxEnumField{
-					name:  data["fieldName"].content,
-					value: data["fieldValue"].content,
+					name: data["name"].content,
+					id:   data["id"].content,
 				})
 			}
 
@@ -176,24 +187,84 @@ func parseMessage(scanner *Scanner) (SyntaxMessage, error) {
 
 		// handle field/attribute stuff
 		default:
-			data, err := scanner.extract([]Token{
-				// @todo first might be token purpose identifier (enum or another message)
-				// @todo repeated or option
-				t(TokenPurposeType, "{{fieldType}}"),
-				t(TokenPurposeIdentifier, "{{fieldName}}"),
-				t(TokenPurposeSymbol, "="),
-				t(TokenPurposeInteger, "{{fieldId}}"),
-				t(TokenPurposeSymbol, ";"),
-			})
-			if err != nil {
-				return syntaxMessage, err
+			// handle repeated & optional flags
+			repeated := false
+			optional := false
+			if scanner.matches(t(TokenPurposeReserved, "repeated")) {
+				repeated = true
+				scanner.next()
+			} else if scanner.matches(t(TokenPurposeReserved, "optional")) {
+				optional = true
+				scanner.next()
 			}
 
-			syntaxMessage.fields = append(syntaxMessage.fields, SyntaxMessageField{
-				name:      data["fieldName"].content,
-				value:     data["fieldId"].content,
-				fieldType: data["fieldType"].content,
-			})
+			syntaxMessageField := SyntaxMessageField{
+				repeated: repeated,
+				optional: optional,
+			}
+
+			switch {
+			// handle maps
+			case scanner.matches(t(TokenPurposeType, "map")):
+				data, err := scanner.extract([]Token{
+					t(TokenPurposeType, "map"),
+					t(TokenPurposeSymbol, "<"),
+					t(TokenPurposeType, "{{mapKey}}"),
+					t(TokenPurposeSymbol, ","),
+					t(TokenPurposeAny, "{{mapValue}}"), // @todo map value can be either a type or token purpose identifier
+					t(TokenPurposeSymbol, ">"),
+					t(TokenPurposeIdentifier, "{{name}}"),
+					t(TokenPurposeSymbol, "="),
+					t(TokenPurposeInteger, "{{id}}"),
+					t(TokenPurposeSymbol, ";"),
+				})
+				if err != nil {
+					return syntaxMessage, err
+				}
+
+				syntaxMessageField.kind = "map"
+				syntaxMessageField.name = data["name"].content
+				syntaxMessageField.id = data["id"].content
+
+				// validate mapKey - mapKeys can be any scalar type but floats & bytes
+				// https://protobuf.dev/programming-guides/proto3/#maps
+				mapKey := data["mapKey"].content
+				if mapKey == "float" || mapKey == "bytes" {
+					return syntaxMessage, syntaxError(data["mapKey"].lineNumber, fmt.Sprintf("map keys cannot be of type '%s'", mapKey))
+				}
+
+				// validate mapValue - mapValues can be anything except other maps
+				// extract would fail if we passed another map anyways
+				// we just want to check if it's a type or identifier and not something weird
+				mapValue := data["mapValue"].content
+				if !(data["mapValue"].purpose == TokenPurposeType || data["mapValue"].purpose == TokenPurposeIdentifier) {
+					return syntaxMessage, syntaxError(data["mapKey"].lineNumber, fmt.Sprintf("map values cannot be of type '%s'", mapValue))
+				}
+
+				syntaxMessageField.mapKey = &mapKey
+				syntaxMessageField.mapValue = &mapValue
+
+			// handle built-in types & declared types like enums
+			// ex) bool field = 1;
+			// ex) Corpus corpus = 1;
+			case scanner.matchesPurpose([]TokenPurpose{TokenPurposeType, TokenPurposeIdentifier}):
+				data, err := scanner.extract([]Token{
+					t(TokenPurposeType, "{{type}}"),
+					t(TokenPurposeIdentifier, "{{name}}"),
+					t(TokenPurposeSymbol, "="),
+					t(TokenPurposeInteger, "{{id}}"),
+					t(TokenPurposeSymbol, ";"),
+				})
+				if err != nil {
+					return syntaxMessage, err
+				}
+
+				syntaxMessageField.kind = data["type"].content
+				syntaxMessageField.name = data["name"].content
+				syntaxMessageField.id = data["id"].content
+			}
+
+			syntaxMessage.fields = append(syntaxMessage.fields, syntaxMessageField)
 		}
 	}
 	scanner.next() // skip }

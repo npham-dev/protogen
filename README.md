@@ -16,7 +16,7 @@ Ultimately, I decided to use `protobuf` and build some kind of type generator. I
 
 ## Supported Syntax
 
-`protogen` only supports a subset of the [proto3 language](https://protobuf.dev/programming-guides/proto3/). I've covered the basics, but anything more complicated should use a mature and battle tested library instead.
+`protogen` only supports a subset of the [proto3 language](https://protobuf.dev/programming-guides/proto3/). I've covered the basics - you can see all supported syntax in `example.proto`. Anything more complicated should use a mature and battle tested library instead.
 
 | Syntax                | Implemented |
 | --------------------- | ----------- |
@@ -24,10 +24,9 @@ Ultimately, I decided to use `protobuf` and build some kind of type generator. I
 | Reserved              | ✅          |
 | Comments              | ✅          |
 | Enums                 | ✅          |
+| Packed Encoding       | ❌          |
 | Import                | ❌          |
 | Maps                  | ❌          |
-| `repeated`            | ❌          |
-| `optional`            | ❌          |
 | `google.protobuf.Any` | ❌          |
 | `oneof`               | ❌          |
 | `option`              | ❌          |
