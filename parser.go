@@ -11,6 +11,7 @@ type SyntaxDocument struct {
 	packageName string
 	syntax      string
 
+	imports  []string
 	enums    []SyntaxEnum
 	messages []SyntaxMessage
 }
@@ -59,7 +60,6 @@ func parse(tokens []Token) (SyntaxDocument, error) {
 	for scanner.hasNext() {
 		switch {
 		// skip over comments
-		// @todo add comments to output to build documentation
 		case scanner.matches(t(TokenPurposeComment, "//")):
 			scanner.next()
 		case scanner.matches(t(TokenPurposeComment, "/*")):
@@ -69,6 +69,21 @@ func parse(tokens []Token) (SyntaxDocument, error) {
 		// https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/descriptor.proto
 		case scanner.matches(t(TokenPurposeReserved, "option")):
 			scanner.skipUntil(t(TokenPurposeSymbol, ";"))
+
+		// skip over import syntax
+		// @todo import public syntax?
+		// @todo translate imports into typescript types 
+		// ex) import "google/protobuf/any.proto";
+		case scanner.matches(t(TokenPurposeReserved, "import")):
+			data, err := scanner.extract([]Token{
+				t(TokenPurposeReserved, "import"),
+				t(TokenPurposeString, "{{name}}"),
+				t(TokenPurposeSymbol, ";"),
+			})
+			if err != nil {
+				return document, err
+			}
+			document.imports = append(document.imports, data["name"].content)
 
 		// package name
 		// ex) package client;

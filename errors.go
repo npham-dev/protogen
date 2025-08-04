@@ -9,7 +9,3 @@ func syntaxError(lineNumber int, message string) error {
 		message,
 	)
 }
-
-func generateError(message string) error {
-	return fmt.Errorf("[protogen] failed to generate:\n%s", message)
-}

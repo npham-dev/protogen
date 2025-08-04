@@ -15,6 +15,13 @@ func newScanner(tokens []Token) Scanner {
 	return Scanner{tokens: tokens, i: 0}
 }
 
+func (s *Scanner) prev() Token {
+	if s.i > 0 {
+		return s.tokens[s.i-1]
+	}
+	return Token{}
+}
+
 func (s *Scanner) curr() Token {
 	return s.tokens[s.i]
 }

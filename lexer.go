@@ -8,7 +8,6 @@ import (
 	"github.com/samber/lo"
 )
 
-// @todo store line number in struct for better error messages?
 type Token struct {
 	purpose    TokenPurpose
 	content    string
@@ -31,9 +30,9 @@ const (
 	TokenPurposeAny        TokenPurpose = "any"
 )
 
-var TOKEN_TYPES = mapset.NewSet[string]("map", "double", "float", "int32", "int64", "uint32", "uint64", "sint32", "sint64", "fixed32", "fixed64", "sfixed32", "sfixed64", "bool", "string", "bytes")
-var TOKEN_SYMBOLS = mapset.NewSet[rune]('<', '>', ';', '}', '{', '=', '[', ']', ',')
-var TOKEN_RESERVED = mapset.NewSet[string]("enum", "option", "optional", "package", "syntax", "message", "repeated")
+var TOKEN_TYPES = mapset.NewSet("map", "double", "float", "int32", "int64", "uint32", "uint64", "sint32", "sint64", "fixed32", "fixed64", "sfixed32", "sfixed64", "bool", "string", "bytes")
+var TOKEN_SYMBOLS = mapset.NewSet('<', '>', ';', '}', '{', '=', '[', ']', ',')
+var TOKEN_RESERVED = mapset.NewSet("enum", "option", "optional", "package", "syntax", "message", "repeated", "public")
 
 // does this token match another token?
 // we don't use equals here b/c line numbers can differ
@@ -78,7 +77,6 @@ func analyze(content []byte) []Token {
 				lineNumber++
 			}
 		case '"':
-			// @todo escaping comments/quotes?
 			i++
 			for hasNext() && currChar() != '"' {
 				word += string(currChar())

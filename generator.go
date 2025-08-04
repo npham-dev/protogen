@@ -84,8 +84,14 @@ func kindToZod(kind string, message *SyntaxMessage, messagePath *[]string) strin
 		case "bytes":
 			return "z.instanceof(Uint8Array)"
 		}
-		// since most types are numbers we use this as a default
+		// since most scalar types are numbers we use this as a default
 		return "z.number()"
+	}
+	
+	// @todo actually read imports
+	// this is a pretty shit mechanism but oh well
+	if kind == "google.protobuf.Any" {
+		return "z.any()"
 	}
 
 	// @audit we should probably verify types against the document & throw an error otherwise
