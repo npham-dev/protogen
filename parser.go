@@ -222,6 +222,11 @@ func parseMessage(scanner *Scanner) (SyntaxMessage, error) {
 					return syntaxMessage, err
 				}
 
+				// map fields cannot be repeated
+				if repeated {
+					return syntaxMessage, syntaxError(data["mapKey"].lineNumber, "maps cannot be repeated")
+				}
+
 				syntaxMessageField.kind = "map"
 				syntaxMessageField.name = data["name"].content
 				syntaxMessageField.id = data["id"].content

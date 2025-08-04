@@ -17,24 +17,6 @@ func generate(document SyntaxDocument) string {
 	return sb.String()
 }
 
-func kindToZod(kind string) string {
-	if TOKEN_TYPES.Contains(kind) {
-		switch kind {
-		case "bool":
-			return "z.boolean()"
-		case "string":
-			return "z.string()"
-		case "bytes":
-			return "z.instanceof(Uint8Array)"
-		}
-		// since most types are numbers we use this as a default
-		return "z.number()"
-	}
-
-	// is identifier, so it's gotta be an enum
-	return fmt.Sprintf("%sEnum", kind)
-}
-
 func generateMessageField(field SyntaxMessageField) string {
 	output := ""
 	switch field.kind {
@@ -59,13 +41,12 @@ func generateMessageField(field SyntaxMessageField) string {
 
 func generateMessage(message SyntaxMessage) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("export const %sMessage = z.object({\n", message.name))
+	sb.WriteString(fmt.Sprintf("export const %s = z.object({\n", message.name))
 	for _, field := range message.fields {
 		sb.WriteString(fmt.Sprintf("  %s: %s,\n", field.name, generateMessageField(field)))
-		// sb.WriteString(fmt.Sprintf("  %s: %s,\n", field.name, field.id))
 	}
 	sb.WriteString("});\n")
-	sb.WriteString(fmt.Sprintf("export const %s = z.infer<typeof %sMessage>;\n", message.name, message.name))
+	sb.WriteString(fmt.Sprintf("export type %sMessage = z.infer<typeof %s>;\n", message.name, message.name))
 	// @todo generate child messages
 	return sb.String()
 }
@@ -74,11 +55,31 @@ func generateEnum(enum SyntaxEnum) string {
 	var sb strings.Builder
 	// apparently using actual enums is not recommended
 	// https://zod.dev/api?id=enums
-	sb.WriteString(fmt.Sprintf("export const %s = {\n", enum.name))
+	sb.WriteString(fmt.Sprintf("export const %sLiteral = {\n", enum.name))
 	for _, field := range enum.fields {
 		sb.WriteString(fmt.Sprintf("  %s: %s,\n", field.name, field.id))
 	}
 	sb.WriteString("} as const;\n")
-	sb.WriteString(fmt.Sprintf("export const %sEnum = z.enum(%s);\n", enum.name, enum.name))
+	sb.WriteString(fmt.Sprintf("export const %s = z.enum(%sLiteral);\n", enum.name, enum.name))
 	return sb.String()
+}
+
+// utility to convert a type into its zod equivalent
+// (I use kind since type is a reserved word)
+func kindToZod(kind string) string {
+	if TOKEN_TYPES.Contains(kind) {
+		switch kind {
+		case "bool":
+			return "z.boolean()"
+		case "string":
+			return "z.string()"
+		case "bytes":
+			return "z.instanceof(Uint8Array)"
+		}
+		// since most types are numbers we use this as a default
+		return "z.number()"
+	}
+
+	// just return identifier
+	return kind 
 }
