@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/samber/lo"
 )
 
@@ -29,6 +30,10 @@ const (
 	TokenPurposeUnknown    TokenPurpose = "unknown"
 	TokenPurposeAny        TokenPurpose = "any"
 )
+
+var TOKEN_TYPES = mapset.NewSet[string]("map", "double", "float", "int32", "int64", "uint32", "uint64", "sint32", "sint64", "fixed32", "fixed64", "sfixed32", "sfixed64", "bool", "string", "bytes")
+var TOKEN_SYMBOLS = mapset.NewSet[rune]('<', '>', ';', '}', '{', '=', '[', ']', ',')
+var TOKEN_RESERVED = mapset.NewSet[string]("enum", "option", "optional", "package", "syntax", "message", "repeated")
 
 // does this token match another token?
 // we don't use equals here b/c line numbers can differ
@@ -155,18 +160,14 @@ func determineTokenPurpose(word string) TokenPurpose {
 	}
 
 	// is it a special char
-	if len(word) > 0 {
-		switch word[0] {
-		case '<', '>', ';', '}', '{', '=', '[', ']', ',':
-			return TokenPurposeSymbol
-		}
+	if len(word) > 0 && TOKEN_SYMBOLS.Contains(rune(word[0])) {
+		return TokenPurposeSymbol
 	}
 
 	// matches a reserved word
-	switch fmtWord {
-	case "map", "double", "float", "int32", "int64", "uint32", "uint64", "sint32", "sint64", "fixed32", "fixed64", "sfixed32", "sfixed64", "bool", "string", "bytes":
+	if TOKEN_TYPES.Contains(fmtWord) {
 		return TokenPurposeType
-	case "enum", "option", "optional", "package", "syntax", "message", "repeated":
+	} else if TOKEN_RESERVED.Contains(fmtWord) {
 		return TokenPurposeReserved
 	}
 

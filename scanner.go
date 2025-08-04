@@ -90,11 +90,3 @@ func (s *Scanner) extract(pattern []Token) (map[string]Token, error) {
 	//     the current token is NOT ";", it's whatever comes after it in the content
 	return data, nil
 }
-
-func syntaxError(lineNumber int, message string) error {
-	return fmt.Errorf(
-		"[protogen] error at line %d:\n%s",
-		lineNumber,
-		message,
-	)
-}

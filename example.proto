@@ -22,7 +22,7 @@ enum Corpus {
 }
 
 message PlayerCreate {
-  string name = 1;
+  repeated string name = 1;
 }
 
 message PlayerMove {
@@ -31,7 +31,7 @@ message PlayerMove {
 
   string id = 1;
   bool angle = 2;
-  bool thrust = 3;
+  optional bool thrust = 3;
   map<string, PlayerCreate> projects = 4;
 }
 

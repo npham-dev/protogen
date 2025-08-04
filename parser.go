@@ -34,7 +34,7 @@ type SyntaxMessage struct {
 type SyntaxMessageField struct {
 	name string
 	id   string
-	kind string
+	kind string // scalar type, map, or identifier
 
 	repeated bool
 	optional bool

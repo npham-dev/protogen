@@ -23,6 +23,5 @@ func main() {
 	}
 	fmt.Printf("%# v\n", pretty.Formatter(data))
 
-
 	fmt.Println(generate(data))
 }
