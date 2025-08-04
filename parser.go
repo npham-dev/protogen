@@ -24,6 +24,7 @@ type SyntaxEnumField struct {
 	name  string
 	value string
 }
+
 type SyntaxMessage struct {
 	name     string
 	fields   []SyntaxMessageField
@@ -101,8 +102,6 @@ func parse(tokens []Token) (SyntaxDocument, error) {
 				return document, err
 			}
 
-			fmt.Println(enumData["enum"])
-
 			syntaxEnum := SyntaxEnum{name: enumData["name"].content}
 
 			// @todo "Enum Value Aliases"
@@ -125,42 +124,18 @@ func parse(tokens []Token) (SyntaxDocument, error) {
 				})
 			}
 
+			scanner.next() // skip }
+
 			document.enums = append(document.enums, syntaxEnum)
 
 		// message
 		case scanner.matches(t(TokenPurposeReserved, "message")):
-			messageData, err := scanner.extract([]Token{
-				t(TokenPurposeReserved, "message"),
-				t(TokenPurposeIdentifier, "{{message}}"),
-				t(TokenPurposeSymbol, "{"),
-			})
+			syntaxMessage, err := parseMessage(&scanner)
 			if err != nil {
 				return document, err
 			}
+			document.messages = append(document.messages, syntaxMessage)
 
-			fmt.Println(messageData["message"])
-			for !scanner.matches(t(TokenPurposeSymbol, "}")) && scanner.hasNext() {
-				// reserved syntax - just skip until ;
-				if scanner.matches(t(TokenPurposeIdentifier, "reserved")) {
-					scanner.skipUntil(t(TokenPurposeSymbol, ";"))
-				}
-
-				// handle message field/attribute stuff
-				data, err := scanner.extract([]Token{
-					// @todo first might be token purpose identifier (enum)
-					t(TokenPurposeType, "{{fieldType}}"),
-					t(TokenPurposeIdentifier, "{{fieldName}}"),
-					t(TokenPurposeSymbol, "="),
-					t(TokenPurposeInteger, "{{fieldId}}"),
-					t(TokenPurposeSymbol, ";"),
-				})
-				if err != nil {
-					return document, err
-				}
-
-				fmt.Println("\t", data["fieldType"], data["fieldName"], data["fieldId"])
-			}
-			scanner.next()// skip }
 		default:
 			curr := scanner.curr()
 			return document, fmt.Errorf("unsupported syntax at line %d:\n%s", curr.lineNumber, curr.content)
@@ -170,10 +145,58 @@ func parse(tokens []Token) (SyntaxDocument, error) {
 	return document, nil
 }
 
-func parseMessage() {
+// dedicated method because we need to recursively parse nested messages
+func parseMessage(scanner *Scanner) (SyntaxMessage, error) {
+	syntaxMessage := SyntaxMessage{}
+	messageData, err := scanner.extract([]Token{
+		t(TokenPurposeReserved, "message"),
+		t(TokenPurposeIdentifier, "{{name}}"),
+		t(TokenPurposeSymbol, "{"),
+	})
+	if err != nil {
+		return syntaxMessage, err
+	}
 
-}
+	syntaxMessage.name = messageData["name"].content
 
-func parseMessageLine() {
+	for !scanner.matches(t(TokenPurposeSymbol, "}")) && scanner.hasNext() {
+		switch {
+		// reserved syntax - just skip until ;
+		// has no use for generation
+		case scanner.matches(t(TokenPurposeIdentifier, "reserved")):
+			scanner.skipUntil(t(TokenPurposeSymbol, ";"))
 
+		// handle nested messages
+		case scanner.matches(t(TokenPurposeReserved, "message")):
+			childSyntaxMessage, parseMessageErr := parseMessage(scanner)
+			if parseMessageErr != nil {
+				return syntaxMessage, err
+			}
+			syntaxMessage.messages = append(syntaxMessage.messages, childSyntaxMessage)
+
+		// handle field/attribute stuff
+		default:
+			data, err := scanner.extract([]Token{
+				// @todo first might be token purpose identifier (enum or another message)
+				// @todo repeated or option
+				t(TokenPurposeType, "{{fieldType}}"),
+				t(TokenPurposeIdentifier, "{{fieldName}}"),
+				t(TokenPurposeSymbol, "="),
+				t(TokenPurposeInteger, "{{fieldId}}"),
+				t(TokenPurposeSymbol, ";"),
+			})
+			if err != nil {
+				return syntaxMessage, err
+			}
+
+			syntaxMessage.fields = append(syntaxMessage.fields, SyntaxMessageField{
+				name:      data["fieldName"].content,
+				value:     data["fieldId"].content,
+				fieldType: data["fieldType"].content,
+			})
+		}
+	}
+	scanner.next() // skip }
+
+	return syntaxMessage, nil
 }
