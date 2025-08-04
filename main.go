@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/kr/pretty"
 )
+
 
 func main() {
 	filePath := "./example.proto"
@@ -14,5 +17,10 @@ func main() {
 	}
 
 	tokens := analyze(content)
-	fmt.Println(parse(tokens))
+	data, err := parse(tokens)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Printf("%# v\n", pretty.Formatter(data))
 }
