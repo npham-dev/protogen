@@ -22,6 +22,9 @@ func main() {
 		return
 	}
 	fmt.Printf("%# v\n", pretty.Formatter(data))
-
-	fmt.Println(generate(data))
+	output := generate(data)
+	err = os.WriteFile("example.ts", []byte(output), 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

@@ -35,5 +35,37 @@ message PlayerMove {
   map<string, PlayerCreate> projects = 4;
 }
 
-/** test multiline */
-/* test multiline */
+message Test {
+  message Result {
+    string url = 1;
+    string title = 2;
+    repeated string snippets = 3;
+  }
+  repeated Result results = 1;
+}
+
+message SearchResponse {
+  message Result {
+    string url = 1;
+    string title = 2;
+    repeated string snippets = 3;
+
+    message Test {
+      string url = 1;
+    }
+  }
+  repeated Result results = 1;
+  Result.Test resultTest = 2;
+  Test.Result testResult = 3;
+}
+
+/** 
+export const Test__Result = z.object()
+export const Test = z.object({})
+
+export const SearchResponse__Result = z.object()
+export const SearchResponse = z.object({
+  results: z.array(SearchResponse__Result),
+  test: Test__Result
+})
+*/
