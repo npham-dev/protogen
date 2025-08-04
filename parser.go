@@ -249,7 +249,7 @@ func parseMessage(scanner *Scanner) (SyntaxMessage, error) {
 			// ex) Corpus corpus = 1;
 			case scanner.matchesPurpose([]TokenPurpose{TokenPurposeType, TokenPurposeIdentifier}):
 				data, err := scanner.extract([]Token{
-					t(TokenPurposeType, "{{type}}"),
+					t(TokenPurposeAny, "{{type}}"),
 					t(TokenPurposeIdentifier, "{{name}}"),
 					t(TokenPurposeSymbol, "="),
 					t(TokenPurposeInteger, "{{id}}"),

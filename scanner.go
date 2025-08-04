@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -43,12 +44,7 @@ func (s *Scanner) matches(token Token) bool {
 }
 
 func (s *Scanner) matchesPurpose(purposes []TokenPurpose) bool {
-	for _, purpose := range purposes {
-		if purpose == s.curr().purpose {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(purposes, s.curr().purpose)
 }
 
 func (s *Scanner) skipUntil(token Token) {
